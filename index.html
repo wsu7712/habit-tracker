@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>습관 트래커</title>
+<style>
+  :root{
+    --bg:#f3f3ee;
+    --card:#ffffff;
+    --green:#2f6b3a;
+    --green-light:#eaf3ea;
+    --green-mid:#bfe0c4;
+    --text:#222;
+    --muted:#8a8a82;
+    --border:#e4e4dc;
+    --sat:#3b6bd6;
+    --sun:#d6453b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:24px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  .top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand .label{
+    font-size:12px;
+    letter-spacing:2px;
+    color:var(--green);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .brand h1{
+    font-size:28px;
+    margin:0;
+    font-weight:800;
+  }
+  .stats{display:flex;gap:10px;}
+  .stat-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 22px;
+    text-align:center;
+    min-width:86px;
+  }
+  .stat-card .num{font-size:22px;font-weight:800;color:var(--text);}
+  .stat-card .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px 18px;
+    margin-bottom:16px;
+  }
+  .month-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .month-nav{display:flex;align-items:center;gap:18px;}
+  .month-nav button{
+    background:none;border:none;font-size:18px;cursor:pointer;color:var(--text);
+    width:28px;height:28px;border-radius:50%;
+  }
+  .month-nav button:hover{background:var(--green-light);}
+  .month-nav .month-title{font-size:17px;font-weight:800;}
+  .actions{display:flex;gap:8px;}
+  .btn{
+    border:1px solid var(--border);
+    background:#f6f6f1;
+    padding:7px 14px;
+    border-radius:8px;
+    font-size:13px;
+    cursor:pointer;
+    font-weight:600;
+    color:var(--text);
+  }
+  .btn:hover{background:var(--green-light);}
+
+  .table-scroll{overflow-x:auto;}
+  table{border-collapse:collapse;width:100%;min-width:900px;}
+  th,td{text-align:center;padding:0;}
+  th.date-head{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:600;
+    padding-bottom:4px;
+    width:30px;
+  }
+  th.date-head .dow{font-size:11px;}
+  th.date-head .dnum{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:22px;height:22px;
+    border-radius:50%;
+    font-weight:700;
+    font-size:12px;
+    margin-top:2px;
+  }
+  th.date-head.sat .dow{color:var(--sat);}
+  th.date-head.sun .dow{color:var(--sun);}
+  th.date-head.today .dnum{background:var(--green);color:#fff;}
+
+  .habit-row td.habit-name{
+    text-align:left;
+    white-space:nowrap;
+    font-size:14px;
+    font-weight:600;
+    padding:6px 10px 6px 2px;
+  }
+  .habit-name .icon{margin-right:6px;}
+  .habit-name .del{
+    margin-left:6px;
+    color:#bbb;
+    cursor:pointer;
+    font-weight:400;
+    font-size:13px;
+  }
+  .habit-name .del:hover{color:var(--sun);}
+
+  .check-cell{padding:3px;}
+  .checkbox{
+    width:22px;height:22px;
+    border:1.5px solid #d8d8cf;
+    border-radius:6px;
+    margin:0 auto;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#fff;
+    transition:all .12s;
+  }
+  .checkbox:hover{border-color:var(--green);}
+  .checkbox.checked{
+    background:var(--green);
+    border-color:var(--green);
+    color:#fff;
+    font-size:13px;
+    font-weight:800;
+  }
+
+  .rate-row td{padding-top:10px;vertical-align:bottom;}
+  .rate-row .rate-label{
+    text-align:left;
+    font-size:12px;
+    color:var(--muted);
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .rate-cell{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+  }
+  .rate-bar-bg{
+    width:22px;
+    height:34px;
+    background:#eceae1;
+    border-radius:5px;
+    display:flex;
+    align-items:flex-end;
+    overflow:hidden;
+  }
+  .rate-bar-fill{
+    width:100%;
+    background:linear-gradient(180deg,#5fae6e,#2f6b3a);
+    border-radius:5px 5px 0 0;
+  }
+  .rate-pct{font-size:10px;color:var(--muted);font-weight:700;}
+  .rate-pct.zero{color:#c9c9bd;}
+
+  .overall-bar{
+    margin-top:14px;
+    height:6px;
+    background:#eceae1;
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .overall-fill{
+    height:100%;
+    background:var(--green);
+  }
+
+  .add-row{
+    margin-top:10px;
+    border:1.5px dashed #c9c9bd;
+    border-radius:10px;
+    padding:10px;
+    text-align:center;
+    color:var(--muted);
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+  }
+  .add-row:hover{background:var(--green-light);color:var(--green);border-color:var(--green);}
+
+  .chart-title{
+    font-size:14px;
+    font-weight:700;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  canvas{width:100%;display:block;}
+
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.35);
+    display:none;align-items:center;justify-content:center;z-index:50;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:#fff;border-radius:14px;padding:22px;width:320px;
+  }
+  .modal h3{margin:0 0 14px;font-size:16px;}
+  .modal input{
+    width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;
+    font-size:14px;margin-bottom:12px;
+  }
+  .icon-grid{
+    display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px;
+  }
+  .icon-opt{
+    border:1.5px solid var(--border);border-radius:8px;
+    text-align:center;padding:7px 0;cursor:pointer;font-size:16px;
+  }
+  .icon-opt.sel{border-color:var(--green);background:var(--green-light);}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+  .modal-actions button{
+    border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .modal-cancel{background:#f0f0ea;color:#555;}
+  .modal-ok{background:var(--green);color:#fff;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand">
+      <div class="label">HABIT TRACKER</div>
+      <h1>습관 트래커</h1>
+    </div>
+    <div class="stats">
+      <div class="stat-card"><div class="num" id="statCount">0</div><div class="lbl">습관 개수</div></div>
+      <div class="stat-card"><div class="num" id="statDone">0</div><div class="lbl">달성 횟수</div></div>
+      <div class="stat-card"><div class="num" id="statRate">0%</div><div class="lbl">전체 달성률</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="month-bar">
+      <div class="month-nav">
+        <button id="prevMonth">‹</button>
+        <div class="month-title" id="monthTitle"></div>
+        <button id="nextMonth">›</button>
+      </div>
+      <div class="actions">
+        <button class="btn" id="exportCsv">↓ CSV</button>
+        <button class="btn" id="resetAll">↺ 초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="table-scroll">
+      <table id="mainTable">
+        <thead><tr id="dateHeadRow"></tr></thead>
+        <tbody id="habitBody"></tbody>
+        <tbody><tr class="rate-row"><td class="rate-label">일일 달성률</td></tr></tbody>
+      </table>
+    </div>
+    <div class="overall-bar"><div class="overall-fill" id="overallFill" style="width:0%"></div></div>
+    <div class="add-row" id="addHabitBtn">+ 습관 추가</div>
+  </div>
+
+  <div class="panel">
+    <div class="chart-title">📈 달성률 추이 (Progress)</div>
+    <canvas id="progressChart" height="260"></canvas>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>새 습관 추가</h3>
+    <input type="text" id="newHabitName" placeholder="습관 이름 (예: 물 2L 마시기)">
+    <div class="icon-grid" id="iconGrid"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="modalCancel">취소</button>
+      <button class="modal-ok" id="modalOk">추가</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ICONS = ["🏃","📚","💧","🌙","🧘","🥗","💪","✍️","🎯","🚭","💰","🎸","🧹","🚴","☀️","🦷","😴","🧃","📵","🙏"];
+const DOW = ["일","월","화","수","목","금","토"];
+
+let state = JSON.parse(localStorage.getItem("habitTrackerData") || "null") || {
+  habits: [
+    {name:"운동하기", icon:"🏃", checks:{}},
+    {name:"독서 30분", icon:"📚", checks:{}},
+    {name:"물 2L 마시기", icon:"💧", checks:{}},
+    {name:"일찍 자기", icon:"🌙", checks:{}},
+    {name:"명상하기", icon:"🧘", checks:{}},
+  ],
+  viewYear: 2026,
+  viewMonth: 10 // 0-indexed, November
+};
+
+let selectedIcon = ICONS[0];
+
+function save(){ localStorage.setItem("habitTrackerData", JSON.stringify(state)); }
+
+function keyOf(y,m,d){ return `${y}-${m+1}-${d}`; }
+
+function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+
+function render(){
+  const y = state.viewYear, m = state.viewMonth;
+  const nDays = daysInMonth(y,m);
+  document.getElementById("monthTitle").textContent = `${y}년 ${m+1}월`;
+
+  // header
+  const headRow = document.getElementById("dateHeadRow");
+  headRow.innerHTML = '<th></th>';
+  const today = new Date();
+  for(let d=1; d<=nDays; d++){
+    const dow = new Date(y,m,d).getDay();
+    const th = document.createElement("th");
+    th.className = "date-head" + (dow===6?" sat":"") + (dow===0?" sun":"");
+    const isToday = today.getFullYear()===y && today.getMonth()===m && today.getDate()===d;
+    if(isToday) th.className += " today";
+    th.innerHTML = `<div class="dow">${DOW[dow]}</div><div class="dnum">${d}</div>`;
+    headRow.appendChild(th);
+  }
+
+  // habit rows
+  const body = document.getElementById("habitBody");
+  body.innerHTML = "";
+  state.habits.forEach((h, hi) => {
+    const tr = document.createElement("tr");
+    tr.className = "habit-row";
+    const nameTd = document.createElement("td");
+    nameTd.className = "habit-name";
+    nameTd.innerHTML = `<span class="icon">${h.icon}</span>${h.name}<span class="del" data-i="${hi}">×</span>`;
+    tr.appendChild(nameTd);
+    for(let d=1; d<=nDays; d++){
+      const td = document.createElement("td");
+      td.className = "check-cell";
+      const k = keyOf(y,m,d);
+      const checked = !!h.checks[k];
+      const box = document.createElement("div");
+      box.className = "checkbox" + (checked?" checked":"");
+      box.textContent = checked ? "✓" : "";
+      box.dataset.hi = hi;
+      box.dataset.k = k;
+      td.appendChild(box);
+      tr.appendChild(td);
+    }
+    body.appendChild(tr);
+  });
+
+  // delete handlers
+  body.querySelectorAll(".del").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const i = +el.dataset.i;
+      state.habits.splice(i,1);
+      save(); render();
+    });
+  });
+  body.querySelectorAll(".checkbox").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const hi = +el.dataset.hi, k = el.dataset.k;
+      const h = state.habits[hi];
+      h.checks[k] = !h.checks[k];
+      save(); render();
+    });
+  });
+
+  // rate row
+  const rateRow = document.querySelector(".rate-row");
+  rateRow.innerHTML = '<td class="rate-label">일일 달성률</td>';
+  const dailyRates = [];
+  const total = state.habits.length;
+  for(let d=1; d<=nDays; d++){
+    const k = keyOf(y,m,d);
+    let done = 0;
+    state.habits.forEach(h=>{ if(h.checks[k]) done++; });
+    const pct = total>0 ? Math.round((done/total)*100) : 0;
+    dailyRates.push(pct);
+    const td = document.createElement("td");
+    const cell = document.createElement("div");
+    cell.className = "rate-cell";
+    const barBg = document.createElement("div");
+    barBg.className = "rate-bar-bg";
+    const fill = document.createElement("div");
+    fill.className = "rate-bar-fill";
+    fill.style.height = pct>0 ? pct+"%" : "0%";
+    barBg.appendChild(fill);
+    const label = document.createElement("div");
+    label.className = "rate-pct" + (pct===0?" zero":"");
+    label.textContent = pct>0 ? pct+"%" : "−";
+    cell.appendChild(barBg);
+    cell.appendChild(label);
+    td.appendChild(cell);
+    rateRow.appendChild(td);
+  }
+
+  // stats
+  let totalChecks = 0, possibleTotal = 0;
+  state.habits.forEach(h=>{
+    for(let d=1; d<=nDays; d++){
+      const k = keyOf(y,m,d);
+      possibleTotal++;
+      if(h.checks[k]) totalChecks++;
+    }
+  });
+  document.getElementById("statCount").textContent = state.habits.length;
+  document.getElementById("statDone").textContent = totalChecks;
+  const overallRate = possibleTotal>0 ? Math.round((totalChecks/possibleTotal)*100) : 0;
+  document.getElementById("statRate").textContent = overallRate + "%";
+  document.getElementById("overallFill").style.width = overallRate + "%";
+
+  drawChart(dailyRates);
+}
+
+function drawChart(rates){
+  const canvas = document.getElementById("progressChart");
+  const dpr = window.devicePixelRatio || 1;
+  const cssWidth = canvas.parentElement.clientWidth;
+  const cssHeight = 260;
+  canvas.width = cssWidth * dpr;
+  canvas.height = cssHeight * dpr;
+  canvas.style.height = cssHeight+"px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0,0,cssWidth,cssHeight);
+
+  const padL = 40, padR = 14, padT = 14, padB = 24;
+  const w = cssWidth - padL - padR;
+  const h = cssHeight - padT - padB;
+  const n = rates.length;
+
+  // grid + y labels
+  ctx.strokeStyle = "#eee";
+  ctx.fillStyle = "#999";
+  ctx.font = "10px sans-serif";
+  ctx.textAlign = "right";
+  for(let p=0;p<=10;p++){
+    const y = padT + h - (p/10)*h;
+    ctx.beginPath();
+    ctx.moveTo(padL, y);
+    ctx.lineTo(padL+w, y);
+    ctx.stroke();
+    ctx.fillText((p*10)+"%", padL-6, y+3);
+  }
+
+  const stepX = n>1 ? w/(n-1) : 0;
+  const pts = rates.map((r,i)=>({
+    x: padL + i*stepX,
+    y: padT + h - (r/100)*h
+  }));
+
+  // area fill
+  const grad = ctx.createLinearGradient(0,padT,0,padT+h);
+  grad.addColorStop(0, "rgba(47,107,58,0.28)");
+  grad.addColorStop(1, "rgba(47,107,58,0.02)");
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, padT+h);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x, padT+h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // line
+  ctx.beginPath();
+  pts.forEach((p,i)=> i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle = "#2f6b3a";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // dots
+  ctx.fillStyle = "#2f6b3a";
+  pts.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,3,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  // x labels
+  ctx.fillStyle = "#999";
+  ctx.textAlign = "center";
+  rates.forEach((r,i)=>{
+    if(n<=31){
+      ctx.fillText((i+1)+"", pts[i].x, cssHeight-6);
+    }
+  });
+}
+
+// nav
+document.getElementById("prevMonth").addEventListener("click", ()=>{
+  state.viewMonth--;
+  if(state.viewMonth<0){ state.viewMonth=11; state.viewYear--; }
+  save(); render();
+});
+document.getElementById("nextMonth").addEventListener("click", ()=>{
+  state.viewMonth++;
+  if(state.viewMonth>11){ state.viewMonth=0; state.viewYear++; }
+  save(); render();
+});
+
+// CSV export
+document.getElementById("exportCsv").addEventListener("click", ()=>{
+  const y=state.viewYear, m=state.viewMonth, n=daysInMonth(y,m);
+  let rows = [["습관", ...Array.from({length:n},(_,i)=>i+1)]];
+  state.habits.forEach(h=>{
+    const row = [h.name];
+    for(let d=1; d<=n; d++){
+      row.push(h.checks[keyOf(y,m,d)] ? "O" : "");
+    }
+    rows.push(row);
+  });
+  const csv = rows.map(r=>r.join(",")).join("\n");
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `habit-tracker-${y}-${m+1}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// reset
+document.getElementById("resetAll").addEventListener("click", ()=>{
+  if(confirm("모든 데이터를 초기화할까요?")){
+    localStorage.removeItem("habitTrackerData");
+    location.reload();
+  }
+});
+
+// modal
+const overlay = document.getElementById("modalOverlay");
+const iconGrid = document.getElementById("iconGrid");
+ICONS.forEach(ic=>{
+  const div = document.createElement("div");
+  div.className = "icon-opt" + (ic===selectedIcon?" sel":"");
+  div.textContent = ic;
+  div.addEventListener("click", ()=>{
+    selectedIcon = ic;
+    iconGrid.querySelectorAll(".icon-opt").forEach(e=>e.classList.remove("sel"));
+    div.classList.add("sel");
+  });
+  iconGrid.appendChild(div);
+});
+
+document.getElementById("addHabitBtn").addEventListener("click", ()=>{
+  document.getElementById("newHabitName").value = "";
+  selectedIcon = ICONS[0];
+  iconGrid.querySelectorAll(".icon-opt").forEach((e,i)=>e.classList.toggle("sel", i===0));
+  overlay.classList.add("show");
+});
+document.getElementById("modalCancel").addEventListener("click", ()=> overlay.classList.remove("show"));
+document.getElementById("modalOk").addEventListener("click", ()=>{
+  const name = document.getElementById("newHabitName").value.trim();
+  if(!name){ alert("습관 이름을 입력해주세요."); return; }
+  state.habits.push({name, icon:selectedIcon, checks:{}});
+  save();
+  overlay.classList.remove("show");
+  render();
+});
+
+window.addEventListener("resize", ()=> render());
+
+render();
+</script>
+</body>
+</html>
